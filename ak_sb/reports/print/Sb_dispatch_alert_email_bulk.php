@@ -1,0 +1,294 @@
+<html lang="en">
+    <head>
+        <title> Bulk Email - Magazine Dispatch Alert</title>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="../../../ak_com/assets/css/bootstrap.3.4.1.min.css">
+        <script src="../../../ak_com/assets/js/jquery.3.3.1.min.js"></script>
+        <script src="../../../ak_com/assets/js/bootstrap.3.4.1.min.js"></script>
+        <link rel="shortcut icon" type="image/png" href="../../../ak_com/assets/images/A_Logo_32x32.png">
+        
+    <link rel="stylesheet" href="../../../ak_com/assets/css/page_setup.css">
+    </head>
+    <body>
+    <!--JS for print button-->
+    <script>
+        function myprint() {
+          window.print();
+        }
+    </script>
+        
+    <button id="printPageButton" onClick="window.print();">Print</button>
+    <page size="A4">
+    <style>
+        body {
+            width: 8.5in;
+            margin: 0in .1875in;
+            }
+        .layout{
+            /* Avery 5160 labels -- CSS and HTML */
+            width: 3.25in; /* plus .6 inches from padding */
+            /*height: 1.875in;*/ /* plus .125 inches from padding */
+            height: 1.575in;
+            padding: .100in .1in 0;
+            margin-right: .100in; /* the gutter */
+
+            float: left;
+
+            text-align: center;
+            overflow: hidden;
+
+            outline: 1px dotted; /* outline doesn't occupy space like border does */
+            }
+        .page-break  {
+            clear: left;
+            display:block;
+            page-break-after:always;
+            }
+      </style>
+<!-- Php code for Header Starts =============================== -->
+        <?php
+            //create connection
+            include_once('../../database/Config.php');
+            $data = new myConfig();
+
+            $con = mysqli_connect($data->host, $data->user,$data->password,$data->db);
+            //confirm connection
+            if ($con)
+            {
+                //echo "1";
+                mysqli_set_charset( $con, 'utf8' );
+
+                $qryOrg="SELECT  logo, org_slogan, main_name,  address, residence_phone1, website FROM ak_organization_info WHERE org_id=2";
+
+                //echo $qryOrg;
+
+                $resOrg = mysqli_query($con, $qryOrg);
+                $recordOrg = mysqli_fetch_array($resOrg); 
+            }
+        ?>
+<!-- Php code for Header Ends =============================== -->
+        <form action="" method="POST" class="form-inline" >
+            <div class="container col-sm-1">
+            </div>
+                <div class="container col-sm-10">
+<!-- Document Header Start ================================================== -->
+                <!--<table width="100%" class="table table-striped table-bordered table-hover" 
+                    id="cs_table" >
+                        <tr align="center">
+                            <td width="15%" align="center">
+                                <a class="pull-center" href="#">
+                                <img id="logo" name="logo" class="img-circle"  width="100" height="100" src="../../../ak_set/database/logos/<?php echo $recordOrg[0];?>"   alt="logo not found>">
+                                </a>
+                            </td>
+                            <td width="85%" align="center">
+                                <h6 Style= color:orange align="center"><i> <?php echo $recordOrg[1];?></i></h6>
+                                <h2 Style= color:slateBlue align="center"><b> <?php echo $recordOrg[2];?></b></h2>
+                                 <h6 Style= color:orange align="center"> <?php echo $recordOrg[3];?>,  Phone: <?php echo $recordOrg[4];?>, <?php echo $recordOrg[5];?></h6>
+                            </td>
+                        </tr>
+                </table>-->
+<!-- Document Header End ================================================== --> 
+                <!--<h5 align="center"><b> RT Case Sheet Register</b></h5>
+                <div class="table-responsive">
+                    <table width="100%" class="table table-striped table-bordered table-hover" 
+                        id="dataTables-example">
+                        <thead>
+                            <tr style="font-size:13px"> 
+                                <th>#</th>
+                                <th>ID</th>
+                                <th>DOA</th>
+                                <th>DOC</th>
+                                <th>R Name</th>
+                                <th>Photo</th>
+                                <th>Full Name</th>
+                                <th>Address</th>
+                                <th>At Post</th>
+                                <th>Mobile No.</th>
+                                <th>Illness</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>-->
+<!-- Php code for OP Case Sheet Table Starts =============================== -->
+                            <?php 
+                                //Import PHPMailer classes into the global namespace
+                                use PHPMailer\PHPMailer\PHPMailer;
+                                require 'vendor/autoload.php';
+                    
+                                $retStr = "";
+                                try
+                                {
+                                    {
+                                        $query="SELECT s.sb_subscription_id, s.dos, s.doc, s.sub_status, p.photo, p.full_name, p.address, p.at_post, p.pin_code, p.state_name, p.mobile_no, s.magazine_name, s.subscription_type, p.email FROM ak_p_registration p, ak_sb_subscription_form s WHERE p.person_id= s.person_id ";
+
+
+                                        if( isset($_GET["from_date"]))
+                                           if( $_GET["from_date"]!==""  &&  $_GET["to_date"]!=="" )
+                                            {
+                                                $query = $query .   " and  ( s.doc between '".  $_GET["from_date"] . "' and '".  $_GET["to_date"] . "')"; 
+                                            }
+
+                                        if( isset($_GET["at_post"]))
+                                            if( $_GET["at_post"]!=="")
+                                            {
+                                                $query = $query .   " and ( p.at_post ='".  $_GET["at_post"] . "')  "; 
+                                            }
+                                        if( isset($_GET["sub_status"]))
+                                            if( $_GET["sub_status"]!=="")
+                                            {
+                                                $query = $query .   " and ( s.sub_status ='".  $_GET["sub_status"] . "')  "; 
+                                            }
+                                        if( isset($_GET["magazine_name"]))
+                                            if( $_GET["magazine_name"]!=="")
+                                            {
+                                                $query = $query .   " and ( s.magazine_name ='".  $_GET["magazine_name"] . "')  "; 
+                                            }
+
+                                        //echo $query;
+
+                                        $response = mysqli_query($con, $query);
+
+                                       /*$i =1;*/
+                                        while($record = mysqli_fetch_array($response))
+                                        {
+                                         
+
+//Create a new PHPMailer instance
+$mail = new PHPMailer;
+
+//Tell PHPMailer to use SMTP
+$mail->isSMTP();
+
+//Enable SMTP debugging
+// 0 = off (for production use)
+// 1 = client messages
+// 2 = client and server messages
+$mail->SMTPDebug = 0;
+
+//Set the hostname of the mail server
+$mail->Host = 'smtp.gmail.com';
+// use
+// $mail->Host = gethostbyname('smtp.gmail.com');
+// if your network does not support SMTP over IPv6
+
+//Set the SMTP port number - 587 for authenticated TLS, a.k.a. RFC4409 SMTP submission
+$mail->Port = 587;
+
+//Set the encryption system to use - ssl (deprecated) or tls
+$mail->SMTPSecure = 'tls';
+
+//Whether to use SMTP authentication
+$mail->SMTPAuth = true;
+
+//Username to use for SMTP authentication - use full email address for gmail
+$mail->Username = "anandkunj.shri@gmail.com";
+
+//Password to use for SMTP authentication
+$mail->Password = "Ht621565621766";
+
+//Set who the message is to be sent from
+$mail->setFrom('anandkunj.shri@gmail.com', 'ANANDKUNJ-ADMIN');
+
+//Set an alternative reply-to address
+$mail->addReplyTo('anandkunj.shri@gmail.com', 'Reply to me');
+
+//Set who the message is to be sent to
+$mail->addAddress($record[13], $record[5]);
+
+//Set the subject line
+$mail->Subject = $record[11] . ' - Magazine Dispatch Alert';
+
+//Read an HTML message body from an external file, convert referenced images to embedded,
+//convert HTML into a basic plain-text alternative body
+//$mail->msgHTML(file_get_contents('contents.html'), __DIR__);
+
+//Replace the plain text body with one created manually
+$mail->Body ="
+    <h2><b>$record[11] - Dispatch Alert </b></h2><br><br>
+    
+    प्रति,
+    नाम : $record[5] <br>
+    पता : $record[6], $record[7], $record[8], $record[9]<br><br>
+    फोन नंबर : $record[10]<br>
+    इ-मेल : $record[13]<br><br>
+
+    सप्रेम नमस्कार,<br>
+
+    आप $record[11] एवं जीवनजल के माध्यम से दवाई-बिना आरोग्य - इस विचारधारा पर समर्पित पत्रिका के सदस्य है. <br>
+
+    आज हि इस महिने की $record[11] पत्रिका बुक-पोस्ट द्वारा आपके उपरोक्त पत्ते पर भेज दि गयी है.<br> 
+    अगर यह पत्रिका आपको अगले 5-7 दिनों में नहीं मिळती तो कृपया आपने नज्दिकी पोस्ट ऑफिस में या पोस्टमैन से पुछ्ताछ करें.
+    आपकी निरंतर सदस्यता के लिए धन्यवाद्. <br><br>
+
+    आपका स्वास्थेच्छु,<br>
+
+    - मनेजर<br><br>
+
+    ============ <br><br> 
+
+    सूचना :<br>
+
+    हर महिने के 10 तारीख को यह पत्रिका कोल्हापूर से पोस्ट होती है; आपको उसी महिने के बीस तारीख तक यह पत्रिका मिल जानी चहिये, अगर पत्रिका नहीं मिलती है तो आप पोस्ट ऑफीस में पुछ्ताछ करे.<br>
+
+    अगर पत्रिका डाकघर की गलतियो से नही मिलती हो, तो उसके लिये संदेश प्रकाशन जिम्मेदार नहीं होगा.<br>
+
+    अधिक जानकारी के लिये कृपया 0231-2321565 इस फोन नंबर पर सुबह 10.00 से शाम 6.00 तक संपर्क करे.";
+                    
+$mail->AltBody = "This is a $record[11] Magazine Dispatch Alert";
+
+//Attach an image file
+//$mail->addAttachment('images/phpmailer_mini.png');
+
+//send the message, check for errors
+if (!$mail->send()) {
+    echo "Mailer Error: " . $mail->ErrorInfo;
+} else {
+    echo "Magazine Dispatch Alert Email Sent to $record[5] ! <br>";
+    //Section 2: IMAP
+    //Uncomment these to save your message in the 'Sent Mail' folder.
+    #if (save_mail($mail)) {
+    #    echo "Message saved!";
+    #}
+}
+
+//Section 2: IMAP
+//IMAP commands requires the PHP IMAP Extension, found at: https://php.net/manual/en/imap.setup.php
+//Function to call which uses the PHP imap_*() functions to save messages: https://php.net/manual/en/book.imap.php
+//You can use imap_getmailboxes($imapStream, '/imap/ssl') to get a list of available folders or labels, this can
+//be useful if you are trying to get this working on a non-Gmail IMAP server.
+/*function save_mail($mail)
+{
+    //You can change 'Sent Mail' to any other folder or tag
+    $path = "{imap.gmail.com:993/imap/ssl}[Gmail]/Sent Mail";
+
+    //Tell your server to open an IMAP connection using the same username and password as you used for SMTP
+    $imapStream = imap_open($path, $mail->Username, $mail->Password);
+
+    $result = imap_append($imapStream, $path, $mail->getSentMIMEMessage());
+    imap_close($imapStream);
+
+    return $result;
+}*/
+                                            /*$i = $i+1;*/
+                                        }
+                                    }
+                                }
+                                catch(Exception $ex)
+                                {
+                                    echo "<script language='javascript'>alert('Error in Reading data')</script>";
+                                }
+                            mysqli_close ($con);
+                        ?>
+<!-- Php code for OP Case Sheet Table ends =============================== -->
+                       <!-- </tbody>
+                    </table>-->
+                     <!--<td><a href="../Rt_cs_register.php">Back</a></td> -->
+                    <!--</div>-->
+                    </div>
+               <div class="container col-sm-0"></div>
+            </form>
+        </page>
+    </body>
+</html>
